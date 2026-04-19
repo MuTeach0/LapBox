@@ -1,0 +1,189 @@
+// LapBox Database Schema
+// Paste this at: https://dbdiagram.io/d
+// .NET 10 · SQL Server · schema: shop
+
+Table shop.Categories {
+  CategoryId    int           [pk, increment, note: "PK"]
+  CategoryName  nvarchar(100) [not null]
+  TaxRate       decimal(5,2)  [not null]
+}
+
+Table shop.Suppliers {
+  SupplierId   int           [pk, increment]
+  SupplierName nvarchar(150) [not null]
+  Phone        nvarchar(20)  [not null]
+}
+
+Table shop.Shippers {
+  ShipperId   int           [pk, increment]
+  ShipperName nvarchar(150) [not null]
+}
+
+Table shop.Tags {
+  TagId   int          [pk, increment]
+  TagName nvarchar(50) [not null]
+}
+
+Table shop.OrderStatuses {
+  StatusCode nvarchar(30)  [pk, note: "Pending | Confirmed | Processing | Shipped | Delivered | Cancelled | Refunded"]
+  Label      nvarchar(100) [not null]
+  SortOrder  int           [not null]
+}
+
+Table shop.Customers {
+  CustomerId int           [pk, increment]
+  FullName   nvarchar(150) [not null]
+  Email      nvarchar(255) [not null, unique]
+}
+
+Table shop.CustomerAddresses {
+  AddressId  int           [pk, increment]
+  CustomerId int           [not null, ref: > shop.Customers.CustomerId]
+  Label      nvarchar(50)  [not null, note: "Home / Work / Other"]
+  Street     nvarchar(300) [not null]
+  City       nvarchar(100) [not null]
+  Country    nvarchar(100) [not null]
+  IsDefault  bit           [not null, default: 0]
+}
+
+Table shop.CustomerPhones {
+  CustomerId  int          [not null, ref: > shop.Customers.CustomerId]
+  PhoneNumber nvarchar(20) [not null]
+  PhoneType   nvarchar(20) [not null, note: "Mobile / Home / Work"]
+
+  indexes {
+    (CustomerId, PhoneNumber) [pk]
+  }
+}
+
+Table shop.Products {
+  ProductId       int           [pk, increment]
+  ProductName     nvarchar(200) [not null]
+  CategoryId      int           [not null, ref: > shop.Categories.CategoryId]
+  SupplierId      int           [not null, ref: > shop.Suppliers.SupplierId]
+  Description     nvarchar(500) [null]
+  Price           decimal(10,2) [not null, note: "Base price > 0"]
+  QuantityInStock int           [not null, note: ">= 0"]
+  IsDeleted       bit           [not null, default: 0, note: "Soft delete"]
+  CreatedAt       datetime2     [not null, default: `SYSDATETIME()`]
+  UpdatedAt       datetime2     [not null, default: `SYSDATETIME()`]
+}
+
+Table shop.ProductVariants {
+  VariantId       int          [pk, increment]
+  ProductId       int          [not null, ref: > shop.Products.ProductId]
+  RAM             nvarchar(20) [not null, note: "8GB / 16GB / 32GB"]
+  Storage         nvarchar(20) [not null, note: "256GB SSD / 512GB SSD / 1TB SSD"]
+  PriceModifier   decimal(10,2)[not null, default: 0, note: "Added to base Price"]
+  QuantityInStock int          [not null, default: 0, note: ">= 0"]
+}
+
+Table shop.ProductImages {
+  ProductId int           [not null, ref: > shop.Products.ProductId]
+  ImageUrl  nvarchar(400) [not null]
+  IsPrimary bit           [not null, default: 0]
+
+  indexes {
+    (ProductId, ImageUrl) [pk]
+  }
+}
+
+Table shop.ProductTags {
+  ProductId int [not null, ref: > shop.Products.ProductId]
+  TagId     int [not null, ref: > shop.Tags.TagId]
+
+  indexes {
+    (ProductId, TagId) [pk]
+  }
+}
+
+Table shop.ShippingEligibilities {
+  ProductId  int          [not null, ref: > shop.Products.ProductId]
+  ShipperId  int          [not null, ref: > shop.Shippers.ShipperId]
+  RegionCode nvarchar(10) [not null]
+
+  indexes {
+    (ProductId, ShipperId, RegionCode) [pk]
+  }
+}
+
+Table shop.Coupons {
+  CouponId       int           [pk, increment]
+  Code           nvarchar(50)  [not null, unique]
+  DiscountType   nvarchar(20)  [not null, note: "Percentage | Fixed"]
+  DiscountValue  decimal(10,2) [not null, note: "> 0"]
+  MinOrderAmount decimal(12,2) [null, note: "NULL = no minimum"]
+  MaxUses        int           [null, note: "NULL = unlimited"]
+  UsedCount      int           [not null, default: 0]
+  ExpiresAt      datetime2     [null, note: "NULL = no expiry"]
+  IsActive       bit           [not null, default: 1]
+}
+
+Table shop.Orders {
+  OrderId        int           [pk, increment]
+  CustomerId     int           [not null, ref: > shop.Customers.CustomerId]
+  ShipperId      int           [not null, ref: > shop.Shippers.ShipperId]
+  AddressId      int           [not null, ref: > shop.CustomerAddresses.AddressId]
+  StatusCode     nvarchar(30)  [not null, ref: > shop.OrderStatuses.StatusCode, default: "Pending"]
+  CouponId       int           [null, ref: > shop.Coupons.CouponId]
+  TotalAmount    decimal(12,2) [not null]
+  DiscountAmount decimal(12,2) [not null, default: 0]
+  OrderDate      datetime2     [not null, default: `SYSDATETIME()`]
+}
+
+Table shop.OrderItems {
+  OrderId   int           [not null, ref: > shop.Orders.OrderId]
+  ProductId int           [not null, ref: > shop.Products.ProductId]
+  UnitPrice decimal(10,2) [not null]
+  Quantity  int           [not null]
+  Discount  decimal(5,2)  [not null, default: 0]
+
+  indexes {
+    (OrderId, ProductId) [pk]
+  }
+}
+
+Table shop.Payments {
+  OrderId       int           [pk, ref: - shop.Orders.OrderId]
+  Amount        decimal(12,2) [not null]
+  Method        nvarchar(30)  [not null, note: "CreditCard | DebitCard | Wallet"]
+  PaymentDate   datetime2     [not null, default: `SYSDATETIME()`]
+  TransactionId nvarchar(100) [not null, unique, note: "Paymob TxID — idempotency key"]
+  Status        nvarchar(20)  [not null, default: "Pending", note: "Pending | Completed | Failed | Refunded"]
+}
+
+Table shop.Reviews {
+  ReviewId   int           [pk, increment]
+  ProductId  int           [not null, ref: > shop.Products.ProductId]
+  CustomerId int           [not null, ref: > shop.Customers.CustomerId]
+  Rating     tinyint       [not null, note: "1–5"]
+  Title      nvarchar(200) [null]
+  Body       nvarchar(2000)[null]
+  CreatedAt  datetime2     [not null, default: `SYSDATETIME()`]
+  IsVerified bit           [not null, default: 0, note: "Has verified purchase"]
+
+  indexes {
+    (ProductId, CustomerId) [unique, name: "UQ_Reviews_OnePerCustomerProduct"]
+  }
+}
+
+Table shop.Wishlists {
+  CustomerId int      [not null, ref: > shop.Customers.CustomerId]
+  ProductId  int      [not null, ref: > shop.Products.ProductId]
+  AddedAt    datetime2[not null, default: `SYSDATETIME()`]
+
+  indexes {
+    (CustomerId, ProductId) [pk]
+  }
+}
+
+Table shop.OrdersArchive {
+  OrderId         int           [pk, note: "Archived order ID — not auto-increment"]
+  CustomerId      int           [not null]
+  ShipperId       int           [not null]
+  OrderDate       datetime2     [not null]
+  ShippingAddress nvarchar(300) [not null]
+  StatusCode      nvarchar(30)  [not null]
+  TotalAmount     decimal(12,2) [not null]
+  ArchivedAt      datetime2     [not null]
+}

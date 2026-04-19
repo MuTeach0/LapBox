@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/LapBox.API/LapBox.API.csproj" />
+    <Project Path="src/LapBox.Application/LapBox.Application.csproj" />
+    <Project Path="src/LapBox.Domain/LapBox.Domain.csproj" />
+    <Project Path="src/LapBox.Infrastructure/LapBox.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/LapBox.Application.Tests/LapBox.Application.Tests.csproj" />
+    <Project Path="tests/LapBox.Domain.Tests/LapBox.Domain.Tests.csproj" />
+    <Project Path="tests/LapBox.Infrastructure.Tests/LapBox.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>
