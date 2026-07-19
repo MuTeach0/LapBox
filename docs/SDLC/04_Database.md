@@ -1,6 +1,6 @@
 # LapBox — Database Design
 
-> DBMS: SQL Server · Schema: `shop` · Database: `ShopDB`
+> DBMS: SQL Server · Schema: `shop` · Database: `LapBox`
 > ORM: Entity Framework Core 10
 
 ---

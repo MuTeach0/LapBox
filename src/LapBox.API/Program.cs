@@ -1,8 +1,41 @@
+using System.IO;
+using Scalar.AspNetCore;
+using DotNetEnv;
+
+using Serilog;
+using LapBox.Infrastructure.Data.Persistence;
+
+// Load environment variables from the nearest .env (searches parent folders)
+static string FindEnvFile()
+{
+    var dir = Directory.GetCurrentDirectory();
+    while (dir != null)
+    {
+        var candidate = Path.Combine(dir, ".env");
+        if (File.Exists(candidate)) return candidate;
+        dir = Directory.GetParent(dir)?.FullName;
+    }
+    // fallback to default behaviour (current directory)
+    return ".env";
+}
+
+Env.Load(FindEnvFile());
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddRazorComponents()
+    .AddInteractiveWebAssemblyComponents();
+
+builder.Services
+    .AddPresentation(builder.Configuration)
+    .AddApplication()
+    .AddInfrastructure(builder.Configuration);
+
+// builder.Services.AddCors();
+
+builder.Host.UseSerilog((context, loggerConfig) =>
+    loggerConfig.ReadFrom.Configuration(context.Configuration));
 
 var app = builder.Build();
 
@@ -10,32 +43,36 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "LapBox API V1");
+
+        options.EnableDeepLinking();
+        options.DisplayRequestDuration();
+        options.EnableFilter();
+    });
+
+    app.MapScalarApiReference();
+
+    await app.InitializeDatabaseAsync();
+
+    app.UseWebAssemblyDebugging();
 }
-
-app.UseHttpsRedirection();
-
-var summaries = new[]
+else
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    app.UseHsts();
+}
+app.UseCoreMiddlewares(builder.Configuration);
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.MapControllers();
+
+app.UseAntiforgery();
+app.MapStaticAssets();
+
+// app.MapRazorComponents<App>().AllowAnonymous()
+//     .AddInteractiveWebAssemblyRenderMode()
+//     .AddAdditionalAssemblies(typeof(LapBox.Client._Imports).Assembly);
+
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

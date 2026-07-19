@@ -3,7 +3,128 @@
   "darkMode": true,
   "gridEnabling": false,
   "detailLevel": "All",
-  "tablePositions": [],
+  "tablePositions": [
+    {
+      "name": "Categories",
+      "schemaName": "shop",
+      "x": 388.41015625,
+      "y": 12
+    },
+    {
+      "name": "Suppliers",
+      "schemaName": "shop",
+      "x": 388.41015625,
+      "y": 186
+    },
+    {
+      "name": "Shippers",
+      "schemaName": "shop",
+      "x": 388.41015625,
+      "y": 360
+    },
+    {
+      "name": "Tags",
+      "schemaName": "shop",
+      "x": 388.41015625,
+      "y": 502
+    },
+    {
+      "name": "OrderStatuses",
+      "schemaName": "shop",
+      "x": 388.41015625,
+      "y": 644
+    },
+    {
+      "name": "Customers",
+      "schemaName": "shop",
+      "x": 388.41015625,
+      "y": 818
+    },
+    {
+      "name": "CustomerAddresses",
+      "schemaName": "shop",
+      "x": 985.4189453125,
+      "y": 474
+    },
+    {
+      "name": "CustomerPhones",
+      "schemaName": "shop",
+      "x": 985.4189453125,
+      "y": 777
+    },
+    {
+      "name": "Products",
+      "schemaName": "shop",
+      "x": 2601.3686648299035,
+      "y": 869.4088149156191
+    },
+    {
+      "name": "ProductVariants",
+      "schemaName": "shop",
+      "x": 1656.587890625,
+      "y": 12
+    },
+    {
+      "name": "ProductImages",
+      "schemaName": "shop",
+      "x": 1656.587890625,
+      "y": 283
+    },
+    {
+      "name": "ProductTags",
+      "schemaName": "shop",
+      "x": 1656.587890625,
+      "y": 631
+    },
+    {
+      "name": "ShippingEligibilities",
+      "schemaName": "shop",
+      "x": 1656.587890625,
+      "y": 457
+    },
+    {
+      "name": "Coupons",
+      "schemaName": "shop",
+      "x": 388.41015625,
+      "y": 992
+    },
+    {
+      "name": "Orders",
+      "schemaName": "shop",
+      "x": 1656.587890625,
+      "y": 1281
+    },
+    {
+      "name": "OrderItems",
+      "schemaName": "shop",
+      "x": 2229.6181640625,
+      "y": 12
+    },
+    {
+      "name": "Payments",
+      "schemaName": "shop",
+      "x": 2229.6181640625,
+      "y": 250
+    },
+    {
+      "name": "Reviews",
+      "schemaName": "shop",
+      "x": 1656.587890625,
+      "y": 773
+    },
+    {
+      "name": "Wishlists",
+      "schemaName": "shop",
+      "x": 1656.587890625,
+      "y": 1107
+    },
+    {
+      "name": "OrdersArchive",
+      "schemaName": "shop",
+      "x": 12,
+      "y": 12
+    }
+  ],
   "tableGroupCollapseStates": [],
   "stickyNoteLayouts": [],
   "referencePaths": []

@@ -2,6 +2,8 @@
   <Folder Name="/src/">
     <Project Path="src/LapBox.API/LapBox.API.csproj" />
     <Project Path="src/LapBox.Application/LapBox.Application.csproj" />
+    <Project Path="src/LapBox.Client/LapBox.Client.csproj" />
+    <Project Path="src/LapBox.Contracts/LapBox.Contracts.csproj" />
     <Project Path="src/LapBox.Domain/LapBox.Domain.csproj" />
     <Project Path="src/LapBox.Infrastructure/LapBox.Infrastructure.csproj" />
   </Folder>

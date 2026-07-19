@@ -47,15 +47,16 @@ This is **not** a marketplace. There is one seller (the business owner), and all
 
 ### In Scope (v1.0)
 
-- Product catalogue with categories, tags, images, and variants (RAM / Storage)
+- Product catalogue with categories, tags, images, and **structured variants (RAM/Storage)**
 - Customer registration, login, and profile management
 - Shopping basket (Redis-backed, no SQL table)
-- Checkout with coupon support
-- Order lifecycle management (Pending → Confirmed → Shipped → Delivered)
-- Payment integration via Paymob
+- **Secure Checkout with temporary stock reservation (15-minute window)**
+- **Detailed Inventory Tracking (Transaction logs for every stock increase/decrease)**
+- Order lifecycle management with **full status history tracking**
+- Payment integration via Paymob (with retry support)
 - Product reviews and ratings (verified purchase only)
 - Wishlist
-- Admin panel: products, orders, customers, coupons, reports
+- Admin panel: products, orders, customers, coupons, reports, **and activity audit logs**
 - JWT-based authentication with role separation (Admin / Customer)
 
 ### Out of Scope (v1.0)
@@ -85,13 +86,13 @@ This is **not** a marketplace. There is one seller (the business owner), and all
 
 | Category | Requirement | How We Meet It |
 |---|---|---|
-| Performance | Product listing < 1.5s, checkout < 2s | Redis caching, DB indexes, async all the way |
-| Scalability | Support 10,000 concurrent users | Stateless API (JWT), Redis for session/basket |
-| Security | No SQL injection, no plaintext passwords, HTTPS only | EF Core parameterised queries, Identity password hashing, HTTPS enforced in middleware |
-| Maintainability | Any developer can onboard in < 1 day | SDLC docs, Clean Architecture, consistent patterns |
-| Testability | Core business logic fully unit-testable | Domain and Application layers have zero infrastructure dependencies |
-| Observability | Errors are traceable without reading source code | Structured logging (Serilog), ProblemDetails on all errors |
-
+| **Reliability** | **Zero Over-selling** | Stock reservation system (15-min window) during checkout prevents race conditions and ensures a product isn't sold twice. |
+| **Performance** | Product listing < 1.5s, checkout < 2s | **Surrogate keys (IDs) for fast DB joins**, Redis caching for catalog/basket, DB indexes, and fully async I/O operations. |
+| **Scalability** | Support 10,000 concurrent users | Stateless API (JWT), Redis for session/basket to offload SQL Server, and efficient connection pooling. |
+| **Security** | No SQL injection, no plaintext passwords | EF Core parameterized queries, Identity password hashing (PBKDF2), and HTTPS enforced via middleware. |
+| **Maintainability** | Developer onboarding < 1 day | Clean Architecture with CQRS, SDLC docs, and consistent modular patterns across all layers. |
+| **Testability** | Core logic fully unit-testable | Domain and Application layers have zero infrastructure dependencies, making them easy to test with xUnit/NSubstitute. |
+| **Observability** | **Full Audit & Traceability** | Structured logging (Serilog), **Inventory transaction logs**, and tracking **CreatedBy / UpdatedBy** for all critical entities. |
 ---
 
 ## 7. Technology Stack

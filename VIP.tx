@@ -1,0 +1,13 @@
+3. Task<Result<Success>> RemoveFromRoleAsync(...)
+تُستخدم فين؟
+
+لوحة تحكم الإدارة (Admin Dashboard): جوه DemoteUserCommandHandler، لو مدير النظام (Super Admin) بيسحب صلاحيات من موظف معين (مثلاً بيشيله من دور Manager).
+
+الاشتراكات المنتهية (Subscriptions/Cron Jobs): لو عندك Background Job بتراجع الاشتراكات، واليوزر اشتراكه خلص، تنادي الدالة دي عشان تشيل منه دور PremiumUser أو VIP.
+
+4. Task<Result<Success>> ChangeUserRoleAsync(...)
+تُستخدم فين؟
+
+بعد إتمام الدفع (Payment Success Flow): ده السيناريو الأساسي اللي اتكلمنا فيه. هتعمل Command أو Event Handler اسمه مثلاً OrderCompletedEventHandler. لما عملية الشراء تنجح بنجاح، الـ Handler ده هيتأكد هل اليوزر ده كان User عادي؟ لو أيوة، ينادي ChangeUserRoleAsync(userId, "User", "Customer") عشان يرقيه ويديله خصائص العملاء الفعليين.
+
+ترقية الحسابات (Account Upgrades): لو اليوزر طلب يرقّي حسابه من حساب "مشتري" لحساب "بائع/تاجر" (مثلاً Buyer إلى Seller)، بتستخدم الدالة دي لنقلة سلسة بين الأدوار.
