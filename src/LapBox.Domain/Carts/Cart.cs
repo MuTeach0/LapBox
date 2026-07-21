@@ -6,13 +6,10 @@ namespace LapBox.Domain.Carts;
 
 public sealed class Cart : AggregateRoot
 {
-    /// <summary>
-    /// The Identity/User ID who owns this cart.
-    /// Uses IdentityId directly since users can have carts before becoming customers.
-    /// </summary>
     public Guid IdentityId { get; private set; }
     public CartStatus Status { get; private set; }
 
+    // Regular collection — not owned. EF Core tracks CartItem as a separate entity.
     private readonly List<CartItem> _items = [];
     public IReadOnlyCollection<CartItem> Items => _items.AsReadOnly();
 
@@ -22,6 +19,14 @@ public sealed class Cart : AggregateRoot
     {
         IdentityId = identityId;
         Status = CartStatus.Active;
+    }
+
+    // Internal constructor for EF Core to materialize existing carts with items
+    internal Cart(Guid id, Guid identityId, CartStatus status, IEnumerable<CartItem> items) : base(id)
+    {
+        IdentityId = identityId;
+        Status = status;
+        _items = items.ToList();
     }
 
     public static Result<Cart> Create(Guid identityId)
@@ -69,6 +74,7 @@ public sealed class Cart : AggregateRoot
     }
 
     public decimal CalculateTotal() => _items.Sum(x => x.UnitPrice * x.Quantity);
+
     public void UpdateLastModified()
     {
         LastModifiedUtc = DateTimeOffset.UtcNow;

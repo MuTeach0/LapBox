@@ -21,7 +21,9 @@ public sealed class AddOrUpdateCartItemCommandHandler(
         await using var transaction = await unitOfWork.BeginTransactionAsync(ct);
         try
         {
-            var laptop = (await laptopRepository.GetByIdsWithLockAsync([command.LaptopId], ct)).SingleOrDefault();
+            // Use standard query inside transaction — the transaction isolation already
+            // protects against concurrent reads; no manual UPDLOCK via FromSqlRaw needed.
+            var laptop = (await laptopRepository.GetByIdsAsync([command.LaptopId], ct)).SingleOrDefault();
             if (laptop is null)
                 return Error.NotFound("Laptop.NotFound", "Laptop was not found.");
 
@@ -55,16 +57,18 @@ public sealed class AddOrUpdateCartItemCommandHandler(
 
             var addResult = cart.AddOrUpdateItem(command.LaptopId, command.Quantity, command.UnitPrice);
             if (addResult.IsError) return addResult.Errors;
-           
-            cart.UpdateLastModified();
 
-            // _dbContext.Entry(cart).State = EntityState.Modified;
-            cartRepository.Update(cart, ct);
+            cart.UpdateLastModified();
+            // No Update() call — EF Core change tracker detects mutations automatically.
 
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
             await cache.RemoveAsync($"cart_{command.IdentityId}", ct);
-            logger.LogInformation("Reserved {Quantity} unit(s) of {LaptopId} for identity {IdentityId}", command.Quantity, command.LaptopId, command.IdentityId);
+
+            logger.LogInformation(
+                "Reserved {Quantity} unit(s) of {LaptopId} for identity {IdentityId}",
+                command.Quantity, command.LaptopId, command.IdentityId);
+
             return Result.Success;
         }
         catch

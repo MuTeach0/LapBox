@@ -6,6 +6,12 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace LapBox.Infrastructure.Data.Configurations;
 
+/// <summary>
+/// CartItem is mapped as a regular entity (not owned).
+/// This avoids EF Core owned-entity quirks where new owned instances could be
+/// treated as UPDATE instead of INSERT on SaveChanges.
+/// Cart → CartItem is a standard one-to-many relationship.
+/// </summary>
 public sealed class CartConfiguration : IEntityTypeConfiguration<Cart>
 {
     public void Configure(EntityTypeBuilder<Cart> builder)
@@ -20,37 +26,6 @@ public sealed class CartConfiguration : IEntityTypeConfiguration<Cart>
             .HasMaxLength(30)
             .IsRequired();
 
-        // Owned collection - Items (owned entity, stored in separate CartItems table)
-        builder.OwnsMany(c => c.Items, item =>
-        {
-            item.ToTable("CartItems");
-
-            // Explicit FK: CartItem.CartId → Cart.Id
-            item.WithOwner().HasForeignKey("CartId");
-            item.HasKey("Id");
-
-            // Map CartItem.CartId to the FK column (no explicit shadow property needed;
-            // WithOwner() creates the column and Property() wires it to the CLR property)
-            item.Property(i => i.CartId)
-                .UsePropertyAccessMode(PropertyAccessMode.Field)
-                .HasColumnName("CartId");
-
-            item.Property(i => i.LaptopId).IsRequired();
-            item.Property(i => i.Quantity).IsRequired();
-            item.Property(i => i.UnitPrice).HasColumnType("decimal(18,2)").IsRequired();
-
-            // FK: CartItem → Laptop
-            item.HasOne<Laptop>()
-                .WithMany()
-                .HasForeignKey("LaptopId")
-                .OnDelete(DeleteBehavior.Restrict);
-        });
-
-        builder.Navigation(c => c.Items)
-            .Metadata.SetField("_items");
-        builder.Navigation(c => c.Items)
-            .UsePropertyAccessMode(PropertyAccessMode.Field);
-
         // FK: Cart → ApplicationUser (Identity)
         builder.HasOne<ApplicationUser>()
             .WithOne()
@@ -62,5 +37,38 @@ public sealed class CartConfiguration : IEntityTypeConfiguration<Cart>
         builder.Property(c => c.CreatedBy).HasMaxLength(100);
         builder.Property(c => c.LastModifiedUtc).IsRequired();
         builder.Property(c => c.LastModifiedBy).HasMaxLength(100);
+    }
+}
+
+/// <summary>
+/// CartItem is a regular entity. EF Core has full change-tracking control,
+/// so new instances are correctly INSERTed (not UPDATEd as with owned entities).
+/// </summary>
+public sealed class CartItemConfiguration : IEntityTypeConfiguration<CartItem>
+{
+    public void Configure(EntityTypeBuilder<CartItem> builder)
+    {
+        builder.ToTable("CartItems");
+
+        builder.HasKey(i => i.Id).IsClustered(false);
+
+        builder.Property(i => i.CartId).IsRequired();
+        builder.Property(i => i.LaptopId).IsRequired();
+        builder.Property(i => i.Quantity).IsRequired();
+        builder.Property(i => i.UnitPrice)
+            .HasColumnType("decimal(18,2)")
+            .IsRequired();
+
+        // FK: CartItem → Cart
+        builder.HasOne<Cart>()
+            .WithMany(c => c.Items)
+            .HasForeignKey(i => i.CartId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // FK: CartItem → Laptop
+        builder.HasOne<Laptop>()
+            .WithMany()
+            .HasForeignKey(i => i.LaptopId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
